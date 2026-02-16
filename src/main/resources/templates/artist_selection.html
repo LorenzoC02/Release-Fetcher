@@ -1,0 +1,171 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Select Artists - Release Fetcher</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        spotify: {
+                            green: '#1DB954',
+                            black: '#191414',
+                            darker: '#121212',
+                            gray: '#282828',
+                            lightgray: '#B3B3B3',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-spotify-black text-white min-h-screen">
+    <!-- Top Navigation Bar -->
+    <nav class="fixed top-0 left-0 right-0 bg-spotify-darker/95 backdrop-blur-md border-b border-spotify-gray/30 z-50">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+            <a href="/" class="flex items-center gap-3 hover:opacity-80 transition-opacity">
+                <div class="w-10 h-10 bg-spotify-green rounded-lg flex items-center justify-center">
+                    <svg class="w-6 h-6 text-spotify-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/>
+                    </svg>
+                </div>
+                <span class="text-xl font-bold">Release Fetcher</span>
+            </a>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="pt-20">
+        <main class="max-w-7xl mx-auto px-6 py-8 pb-32">
+            <div class="mb-6">
+                <a href="/" class="text-spotify-lightgray hover:text-white transition-colors inline-flex items-center gap-2 mb-4">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                    </svg>
+                    Back to Playlists
+                </a>
+                <h1 class="text-5xl font-bold mb-4">Select Artists</h1>
+                <p class="text-xl text-spotify-lightgray">
+                    Found <span th:text="${trackCount}" class="text-white font-semibold">0</span> tracks, containing
+                    <span th:text="${artists.size()}" class="text-white font-semibold">0</span> unique Main Artists.
+                </p>
+            </div>
+
+            <form th:action="@{/check-releases}" method="post">
+                <input type="hidden" name="playlistId" th:value="${playlistId}" />
+
+                <div th:if="${error}" class="mb-6 bg-red-900/20 border border-red-500/50 p-4 rounded-lg">
+                    <p th:text="${error}" class="text-red-400"></p>
+                </div>
+
+                <!-- Filter Controls -->
+                <div class="bg-spotify-gray p-6 rounded-lg mb-8">
+                    <div class="flex flex-wrap items-center gap-4">
+                        <div class="flex-1 min-w-[200px]">
+                            <label class="block text-sm font-semibold text-spotify-lightgray mb-2">Release Date Since:</label>
+                            <input type="date" 
+                                   name="sinceDate" 
+                                   required 
+                                   class="w-full px-4 py-3 bg-spotify-darker text-white rounded-md focus:outline-none focus:ring-2 focus:ring-spotify-green" />
+                        </div>
+                        <div class="flex gap-3">
+                            <button type="button" 
+                                    onclick="selectAll()" 
+                                    class="px-6 py-3 bg-spotify-darker text-white font-semibold rounded-full hover:bg-spotify-gray border border-spotify-lightgray/30 transition-all">
+                                Select All
+                            </button>
+                            <button type="button" 
+                                    onclick="deselectAll()" 
+                                    class="px-6 py-3 bg-spotify-darker text-white font-semibold rounded-full hover:bg-spotify-gray border border-spotify-lightgray/30 transition-all">
+                                Deselect All
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Artist Grid -->
+                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                    <div th:each="stat : ${artists}" 
+                         class="bg-spotify-gray p-4 rounded-lg hover:bg-spotify-gray/80 transition-all duration-200">
+                        <label class="flex items-start gap-3 cursor-pointer">
+                            <input type="checkbox" 
+                                   name="artistIds" 
+                                   th:value="${stat.artist().id()}" 
+                                   checked 
+                                   class="w-5 h-5 mt-0.5 rounded bg-spotify-darker border-spotify-lightgray/50 text-spotify-green focus:ring-spotify-green focus:ring-2 cursor-pointer" />
+                            <div class="flex-1 min-w-0">
+                                <span th:text="${stat.artist().name()}" 
+                                      class="block font-semibold text-white truncate">
+                                    Artist Name
+                                </span>
+                                <span th:text="'(' + ${stat.trackCount()} + ' tracks)'" 
+                                      class="text-sm text-spotify-lightgray">
+                                </span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Sticky Submit Bar -->
+                <div class="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-spotify-gray via-spotify-gray to-transparent p-6 backdrop-blur-sm">
+                    <div class="flex items-center justify-between max-w-7xl mx-auto">
+                        <div class="text-spotify-lightgray text-sm">
+                            <span class="selected-count">All artists selected</span>
+                        </div>
+                        <button type="submit" 
+                                class="px-12 py-4 bg-spotify-green text-spotify-black font-bold rounded-full hover:bg-[#1ed760] hover:scale-105 transition-all duration-200 text-lg shadow-lg">
+                            Find Releases
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </main>
+    </div>
+
+    <script>
+        function selectAll() {
+            document
+                .querySelectorAll('input[name="artistIds"]')
+                .forEach((cb) => (cb.checked = true));
+            updateCount();
+        }
+        
+        function deselectAll() {
+            document
+                .querySelectorAll('input[name="artistIds"]')
+                .forEach((cb) => (cb.checked = false));
+            updateCount();
+        }
+
+        function updateCount() {
+            const checked = document.querySelectorAll('input[name="artistIds"]:checked').length;
+            const total = document.querySelectorAll('input[name="artistIds"]').length;
+            const countEl = document.querySelector('.selected-count');
+            if (countEl) {
+                countEl.textContent = `${checked} of ${total} artists selected`;
+            }
+        }
+
+        // Initialize count on load
+        document.addEventListener('DOMContentLoaded', () => {
+            updateCount();
+            // Add change listeners to all checkboxes
+            document.querySelectorAll('input[name="artistIds"]').forEach(cb => {
+                cb.addEventListener('change', updateCount);
+            });
+        });
+    </script>
+</body>
+</html>

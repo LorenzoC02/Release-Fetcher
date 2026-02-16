@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Releases - Release Fetcher</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        spotify: {
+                            green: '#1DB954',
+                            black: '#191414',
+                            darker: '#121212',
+                            gray: '#282828',
+                            lightgray: '#B3B3B3',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+        dialog::backdrop {
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(4px);
+        }
+    </style>
+</head>
+<body class="bg-spotify-black text-white min-h-screen">
+    <!-- Top Navigation Bar -->
+    <nav class="fixed top-0 left-0 right-0 bg-spotify-darker/95 backdrop-blur-md border-b border-spotify-gray/30 z-50">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+            <a href="/" class="flex items-center gap-3 hover:opacity-80 transition-opacity">
+                <div class="w-10 h-10 bg-spotify-green rounded-lg flex items-center justify-center">
+                    <svg class="w-6 h-6 text-spotify-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/>
+                    </svg>
+                </div>
+                <span class="text-xl font-bold">Release Fetcher</span>
+            </a>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="pt-20">
+        <main class="max-w-7xl mx-auto px-6 py-8">
+            <div class="mb-6">
+                <a th:href="@{'/playlist/' + ${sourcePlaylistId}}" class="text-spotify-lightgray hover:text-white transition-colors inline-flex items-center gap-2 mb-4">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                    </svg>
+                    Back to Artists
+                </a>
+                <h1 class="text-5xl font-bold mb-4">New Releases</h1>
+                <p class="text-xl text-spotify-lightgray">
+                    Found <span th:text="${releases.size()}" class="text-white font-semibold">0</span> releases since 
+                    <span th:text="${sinceDate}" class="text-white font-semibold">Date</span>.
+                </p>
+            </div>
+
+            <div th:if="${error}" class="mb-6 bg-red-900/20 border border-red-500/50 p-4 rounded-lg">
+                <p th:text="${error}" class="text-red-400"></p>
+            </div>
+
+            <!-- Releases Tracklist -->
+            <div class="bg-spotify-darker/40 rounded-lg overflow-hidden">
+                <!-- Table Header -->
+                <div class="grid grid-cols-[64px_minmax(200px,1fr)_minmax(180px,300px)_140px_200px] gap-4 px-6 py-3 border-b border-spotify-gray/50 text-sm font-semibold text-spotify-lightgray uppercase tracking-wider">
+                    <div class="text-center">#</div>
+                    <div>Title</div>
+                    <div>Artist</div>
+                    <div>Release Date</div>
+                    <div class="text-right">Actions</div>
+                </div>
+
+                <!-- Release Rows -->
+                <div th:each="release, iterStat : ${releases}" 
+                     class="grid grid-cols-[64px_minmax(200px,1fr)_minmax(180px,300px)_140px_200px] gap-4 px-6 py-3 items-center border-b border-spotify-gray/30 last:border-b-0 hover:bg-spotify-gray/40 transition-all duration-200 group">
+                    
+                    <!-- Album Art -->
+                    <div class="flex items-center justify-center">
+                        <div class="relative w-12 h-12">
+                            <img th:if="${!release.images().isEmpty()}" 
+                                 th:src="${release.images()[0].url()}" 
+                                 class="w-full h-full object-cover rounded shadow-md" 
+                                 alt="Album cover" />
+                            <div th:unless="${!release.images().isEmpty()}"
+                                 class="w-full h-full bg-spotify-gray rounded flex items-center justify-center">
+                                <svg class="w-6 h-6 text-spotify-lightgray" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Title & Type -->
+                    <div class="min-w-0">
+                        <div th:text="${release.name()}" 
+                             class="font-semibold text-white truncate group-hover:text-spotify-green transition-colors">
+                            Album Name
+                        </div>
+                        <div class="flex items-center gap-2 text-sm text-spotify-lightgray mt-1">
+                            <span th:text="${release.album_type()} == 'album' ? 'Album' : 'Single'" 
+                                  class="px-2 py-0.5 bg-spotify-gray rounded text-xs font-medium">
+                                Type
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <!-- Artist -->
+                    <div class="text-spotify-lightgray truncate text-sm">
+                        <span th:each="artist, artistStat : ${release.artists()}" 
+                              th:text="${artist.name()} + ${!artistStat.last ? ', ' : ''}">Artist</span>
+                    </div>
+                    
+                    <!-- Release Date -->
+                    <div class="text-spotify-lightgray text-sm" th:text="${release.release_date()}">
+                        YYYY-MM-DD
+                    </div>
+                    
+                    <!-- Actions -->
+                    <div class="flex items-center justify-end gap-2">
+                        <a th:if="${release.external_urls() != null and release.external_urls()['spotify'] != null}"
+                           th:href="${release.external_urls()['spotify']}" 
+                           target="_blank"
+                           class="p-2 text-spotify-lightgray hover:text-spotify-green transition-colors"
+                           title="Listen on Spotify">
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/>
+                            </svg>
+                        </a>
+                        
+                        <button th:data-album-id="${release.id()}" 
+                                onclick="openPlaylistModal(this.getAttribute('data-album-id'))" 
+                                class="px-4 py-2 bg-spotify-green text-spotify-black font-bold rounded-full hover:bg-[#1ed760] hover:scale-105 transition-all duration-200 text-sm">
+                            Add to Playlist
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Playlist Selection Modal -->
+    <dialog id="playlistModal" class="bg-spotify-gray rounded-xl p-0 border border-spotify-lightgray/20 shadow-2xl backdrop:bg-black/80 backdrop:backdrop-blur-sm max-w-md w-full">
+        <div class="p-6">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-2xl font-bold text-white">Add to Playlist</h3>
+                <button type="button" 
+                        onclick="document.getElementById('playlistModal').close()" 
+                        class="text-spotify-lightgray hover:text-white transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            
+            <form th:action="@{/add-to-playlist}" method="post">
+                <input type="hidden" name="albumId" id="modalAlbumId" />
+                <input type="hidden" name="sourcePlaylistId" th:value="${sourcePlaylistId}" />
+                <input type="hidden" name="sinceDate" th:value="${sinceDate}" />
+                <th:block th:each="artistId : ${artistIds}">
+                    <input type="hidden" name="artistIds" th:value="${artistId}" />
+                </th:block>
+                
+                <div class="mb-6">
+                    <label for="playlistId" class="block text-sm font-semibold text-spotify-lightgray mb-2">
+                        Select a playlist:
+                    </label>
+                    <select name="playlistId" 
+                            id="playlistId" 
+                            required 
+                            class="w-full px-4 py-3 bg-spotify-darker text-white rounded-md focus:outline-none focus:ring-2 focus:ring-spotify-green">
+                        <option th:each="pl : ${playlists}" 
+                                th:value="${pl.id()}" 
+                                th:text="${pl.name()}">
+                            Playlist Name
+                        </option>
+                    </select>
+                </div>
+
+                <div class="flex gap-3 justify-end">
+                    <button type="button" 
+                            onclick="document.getElementById('playlistModal').close()" 
+                            class="px-6 py-3 bg-spotify-darker text-white font-semibold rounded-full hover:bg-spotify-gray transition-all">
+                        Cancel
+                    </button>
+                    <button type="submit" 
+                            class="px-6 py-3 bg-spotify-green text-spotify-black font-bold rounded-full hover:bg-[#1ed760] hover:scale-105 transition-all duration-200">
+                        Add to Playlist
+                    </button>
+                </div>
+            </form>
+        </div>
+    </dialog>
+
+    <script>
+        function openPlaylistModal(albumId) {
+            document.getElementById('modalAlbumId').value = albumId;
+            document.getElementById('playlistModal').showModal();
+        }
+    </script>
+</body>
+</html>
