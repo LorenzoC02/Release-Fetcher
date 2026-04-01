@@ -31,7 +31,7 @@ public class SpotifyApiService {
     com.releasefetcher.model.PlaylistTrack
   > getPlaylistTracks(String playlistId) {
     return fetchAllItems(
-      "/playlists/" + playlistId + "/tracks?limit=50",
+      "/playlists/" + playlistId + "/items?limit=50",
       new org.springframework.core.ParameterizedTypeReference<
         com.releasefetcher.model.SpotifyPaging<
           com.releasefetcher.model.PlaylistTrack
@@ -43,7 +43,6 @@ public class SpotifyApiService {
   public java.util.List<com.releasefetcher.model.Album> getArtistAlbums(
     String artistId
   ) {
-    // Fetch both albums and singles
     return fetchAllItems(
       "/artists/" + artistId + "/albums?include_groups=album,single&limit=50",
       new org.springframework.core.ParameterizedTypeReference<
@@ -75,7 +74,7 @@ public class SpotifyApiService {
     try {
       spotifyRestClient
         .post()
-        .uri("/playlists/" + playlistId + "/tracks")
+        .uri("/playlists/" + playlistId + "/items")
         .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
         .body(body)
         .retrieve()
@@ -132,11 +131,6 @@ public class SpotifyApiService {
       }
 
       if (pathAndQuery.startsWith("/v1")) {
-        // Correct path for RestClient which already has base URL
-        // However, if the client was created WITHOUT base URL (unlikely here but good to know), it would matter.
-        // For the default client, it has base URL. For our new manual client, it also has base URL.
-        // But the 'next' URL from Spotify is absolute.
-        // We strip /v1 because we configured baseUrl ending in /v1.
         pathAndQuery = pathAndQuery.replace("/v1", "");
       }
 
